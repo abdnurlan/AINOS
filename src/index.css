@@ -1,0 +1,256 @@
+@import "tailwindcss";
+
+/* ===========================
+   AINOS Premium Space Theme
+   =========================== */
+
+@theme {
+  --color-ainos-space-deep: #020408;
+  --color-ainos-space-dark: #0a0e1a;
+  --color-ainos-space-mid: #121828;
+  --color-ainos-panel: rgba(8, 14, 30, 0.75);
+  --color-ainos-panel-hover: rgba(15, 22, 42, 0.85);
+  --color-ainos-panel-border: rgba(100, 140, 255, 0.12);
+  --color-ainos-panel-border-hover: rgba(100, 140, 255, 0.25);
+  --color-ainos-accent: #4d9aff;
+  --color-ainos-accent-dim: rgba(77, 154, 255, 0.2);
+  --color-ainos-accent-glow: rgba(77, 154, 255, 0.08);
+  --color-ainos-success: #22c55e;
+  --color-ainos-warning: #f59e0b;
+  --color-ainos-danger: #ef4444;
+  --color-ainos-text: #e8edf5;
+  --color-ainos-text-dim: rgba(200, 210, 235, 0.5);
+  --color-ainos-text-muted: rgba(200, 210, 235, 0.3);
+
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+/* ===========================
+   Glassmorphism Panel System
+   =========================== */
+
+.glass-panel {
+  background: linear-gradient(135deg,
+      rgba(8, 14, 30, 0.82) 0%,
+      rgba(12, 18, 35, 0.78) 50%,
+      rgba(8, 14, 28, 0.85) 100%);
+  border: 1px solid var(--color-ainos-panel-border);
+  border-radius: 16px;
+  backdrop-filter: blur(24px) saturate(140%);
+  -webkit-backdrop-filter: blur(24px) saturate(140%);
+  box-shadow:
+    0 0 1px rgba(100, 140, 255, 0.15),
+    0 4px 24px rgba(0, 0, 0, 0.5),
+    0 12px 48px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.glass-panel:hover {
+  border-color: var(--color-ainos-panel-border-hover);
+  box-shadow:
+    0 0 2px rgba(100, 140, 255, 0.2),
+    0 4px 24px rgba(0, 0, 0, 0.5),
+    0 12px 48px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.glass-panel-compact {
+  background: rgba(8, 14, 30, 0.7);
+  border: 1px solid var(--color-ainos-panel-border);
+  border-radius: 12px;
+  backdrop-filter: blur(16px) saturate(120%);
+  -webkit-backdrop-filter: blur(16px) saturate(120%);
+  box-shadow:
+    0 2px 12px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+/* ===========================
+   Button Styles
+   =========================== */
+
+.btn-primary {
+  background: linear-gradient(135deg, rgba(77, 154, 255, 0.2) 0%, rgba(77, 154, 255, 0.12) 100%);
+  border: 1px solid rgba(77, 154, 255, 0.3);
+  color: var(--color-ainos-accent);
+  border-radius: 10px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, rgba(77, 154, 255, 0.3) 0%, rgba(77, 154, 255, 0.2) 100%);
+  border-color: rgba(77, 154, 255, 0.5);
+  box-shadow: 0 0 12px rgba(77, 154, 255, 0.15);
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--color-ainos-text-dim);
+  border-radius: 10px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: var(--color-ainos-text);
+}
+
+/* ===========================
+   Toggle Switch
+   =========================== */
+
+.toggle-switch {
+  position: relative;
+  width: 38px;
+  height: 20px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.toggle-switch.active {
+  background: rgba(77, 154, 255, 0.25);
+  border-color: rgba(77, 154, 255, 0.4);
+}
+
+.toggle-switch::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transition: all 0.3s ease;
+}
+
+.toggle-switch.active::after {
+  left: 20px;
+  background: var(--color-ainos-accent);
+  box-shadow: 0 0 8px rgba(77, 154, 255, 0.4);
+}
+
+/* ===========================
+   Scrollbar
+   =========================== */
+
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(100, 140, 255, 0.15);
+  border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 140, 255, 0.3);
+}
+
+/* ===========================
+   Global Resets
+   =========================== */
+
+body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background: var(--color-ainos-space-deep);
+  color: var(--color-ainos-text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* ===========================
+   Animations
+   =========================== */
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse-glow {
+
+  0%,
+  100% {
+    box-shadow: 0 0 4px rgba(77, 154, 255, 0.2);
+  }
+
+  50% {
+    box-shadow: 0 0 12px rgba(77, 154, 255, 0.4);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 3s ease-in-out infinite;
+}
+
+/* ===========================
+   Night Mode Filter
+   =========================== */
+
+.night-mode-filter {
+  filter: brightness(0.7) sepia(0.4) saturate(0.6) hue-rotate(-10deg);
+}
+
+/* ===========================
+   Utility — Force GPU acceleration
+   =========================== */
+
+.gpu-accelerated {
+  transform: translateZ(0);
+  will-change: transform;
+}

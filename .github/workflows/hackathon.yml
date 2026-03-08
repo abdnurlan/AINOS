@@ -63,7 +63,7 @@ jobs:
       run: ssh-keyscan -H ${{ vars.DROPLET_IP }} >> ~/.ssh/known_hosts
 
     - name: Copy docker-compose.yml to droplet
-      run: scp -o StrictHostKeyChecking=no docker-compose.yml root@${{ vars.DROPLET_IP }}:~/
+      run: scp -o StrictHostKeyChecking=no docker-compose.yml root@${{ vars.DROPLET_IP }}:~/ainos/
 
     - name: SSH into server and deploy with Docker Compose
       env:

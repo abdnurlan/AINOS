@@ -1,0 +1,10 @@
+node_modules
+dist
+.git
+.github
+*.md
+.env*
+test-results
+ainos-backend/target
+ainos-backend/.mvn
+scripts

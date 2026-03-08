@@ -1,10 +1,10 @@
-import { useMemo } from 'react';
+import { useMemo, useCallback, useRef } from 'react';
 import { Billboard, Text } from '@react-three/drei';
-import { useFrame } from '@react-three/fiber';
-import { useRef } from 'react';
+import type { ThreeEvent } from '@react-three/fiber';
 import * as THREE from 'three';
 import { calculatePlanetPositions, raDecToCartesian } from '../../utils/astronomy';
 import { useAppStore } from '../../store/useAppStore';
+import type { CelestialObject } from '../../types';
 
 const PLANET_COLORS: Record<string, string> = {
   Mercury: '#c0c0c8',
@@ -32,11 +32,40 @@ const PLANET_SIZES: Record<string, number> = {
 
 export default function Planets() {
   const observer = useAppStore((s) => s.observer);
+  const simulationTime = useAppStore((s) => s.simulationTime);
+  const setSelectedObject = useAppStore((s) => s.setSelectedObject);
   const groupRef = useRef<THREE.Group>(null);
 
   const planets = useMemo(() => {
-    return calculatePlanetPositions(observer, new Date());
-  }, [observer]);
+    return calculatePlanetPositions(observer, simulationTime);
+  }, [observer, simulationTime]);
+
+  const handlePlanetClick = useCallback(
+    (
+      planet: (typeof planets)[number],
+      event: ThreeEvent<MouseEvent>
+    ) => {
+      event.stopPropagation();
+
+      const objectType: CelestialObject['type'] =
+        planet.name === 'Moon' ? 'moon' : planet.name === 'Sun' ? 'sun' : 'planet';
+
+      const selectedObject: CelestialObject = {
+        id: `planet-${planet.name.toLowerCase()}`,
+        name: planet.name,
+        type: objectType,
+        ra: planet.ra,
+        dec: planet.dec,
+        azimuth: planet.azimuth,
+        altitude: planet.altitude,
+        magnitude: planet.magnitude,
+        distance: `${planet.distance.toFixed(3)} AU`,
+      };
+
+      setSelectedObject(selectedObject);
+    },
+    [setSelectedObject]
+  );
 
   return (
     <group ref={groupRef}>
@@ -49,7 +78,11 @@ export default function Planets() {
         const size = PLANET_SIZES[planet.name] || 4;
 
         return (
-          <group key={planet.name} position={[x, y, z]}>
+          <group
+            key={planet.name}
+            position={[x, y, z]}
+            onClick={(event) => handlePlanetClick(planet, event)}
+          >
             {/* Outer glow halo */}
             <Billboard>
               <mesh>
@@ -86,6 +119,11 @@ export default function Planets() {
                 roughness={0.6}
                 metalness={0.1}
               />
+            </mesh>
+
+            <mesh>
+              <sphereGeometry args={[size * 1.6, 16, 16]} />
+              <meshBasicMaterial transparent opacity={0} depthWrite={false} />
             </mesh>
 
             {/* Planet label */}

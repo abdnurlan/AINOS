@@ -1,13 +1,21 @@
-import { useRef } from 'react';
+import { useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { raDecToCartesian } from '../../utils/astronomy';
+import { resolveCelestialObject } from '../../utils/catalog';
 import { useAppStore } from '../../store/useAppStore';
 
 export default function CelestialMarker() {
   const selectedObject = useAppStore((s) => s.selectedObject);
+  const observer = useAppStore((s) => s.observer);
+  const simulationTime = useAppStore((s) => s.simulationTime);
   const innerRef = useRef<THREE.Mesh>(null);
   const outerRef = useRef<THREE.Mesh>(null);
+
+  const resolvedObject = useMemo(() => {
+    if (!selectedObject) return null;
+    return resolveCelestialObject(selectedObject, observer, simulationTime);
+  }, [observer, selectedObject, simulationTime]);
 
   useFrame(({ clock }) => {
     const t = clock.getElapsedTime();
@@ -27,9 +35,9 @@ export default function CelestialMarker() {
     }
   });
 
-  if (!selectedObject) return null;
+  if (!resolvedObject) return null;
 
-  const [x, y, z] = raDecToCartesian(selectedObject.ra, selectedObject.dec, 493);
+  const [x, y, z] = raDecToCartesian(resolvedObject.ra, resolvedObject.dec, 493);
 
   return (
     <group position={[x, y, z]}>

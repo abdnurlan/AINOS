@@ -25,7 +25,7 @@ export default function SettingsPanel() {
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: 0.2 }}
         className="fixed top-5 right-5 z-40 glass-panel p-2.5 text-ainos-text-dim 
-                   hover:text-ainos-text cursor-pointer glow-hover transition-all duration-300"
+                   hover:text-ainos-text cursor-pointer glow-hover transition-all duration-300 pointer-events-auto"
         onClick={() => setSettingsOpen(!settingsOpen)}
       >
         <GearIcon />
@@ -39,7 +39,7 @@ export default function SettingsPanel() {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 60 }}
             transition={{ duration: 0.25, ease: 'easeOut' }}
-            className="fixed right-5 top-16 z-50 w-72 glass-panel overflow-hidden"
+            className="fixed right-5 top-16 z-50 w-72 glass-panel overflow-hidden pointer-events-auto"
           >
             {/* Header */}
             <div className="px-4 py-3 border-b border-ainos-panel-border flex items-center justify-between">
@@ -52,56 +52,130 @@ export default function SettingsPanel() {
               </button>
             </div>
 
-            <div className="p-4 space-y-4">
-              {/* Toggles */}
-              <ToggleSetting
-                label="Constellation Lines"
-                checked={settings.showConstellationLines}
-                onChange={(v) => updateSettings({ showConstellationLines: v })}
-              />
-              <ToggleSetting
-                label="Constellation Labels"
-                checked={settings.showConstellationLabels}
-                onChange={(v) => updateSettings({ showConstellationLabels: v })}
-              />
+            <div className="p-4 space-y-4 max-h-[70vh] overflow-y-auto">
+              {/* Stars Section */}
+              <div className="text-[10px] uppercase tracking-wider text-ainos-accent font-semibold mb-2">
+                Stars
+              </div>
               <ToggleSetting
                 label="Star Labels"
                 checked={settings.showStarLabels}
                 onChange={(v) => updateSettings({ showStarLabels: v })}
               />
-              <ToggleSetting
-                label="Coordinate Grid"
-                checked={settings.showCoordinateGrid}
-                onChange={(v) => updateSettings({ showCoordinateGrid: v })}
-              />
-              <ToggleSetting
-                label="Night Mode"
-                checked={settings.nightMode}
-                onChange={(v) => updateSettings({ nightMode: v })}
+              <SliderSetting
+                label="Star Magnitude Limit"
+                value={settings.magnitudeFilter}
+                min={1}
+                max={8}
+                step={0.5}
+                onChange={(v) => updateSettings({ magnitudeFilter: v })}
+                formatValue={(v) => `≤ ${v.toFixed(1)}`}
               />
 
-              {/* Sliders */}
+              {/* Constellations Section */}
               <div className="border-t border-ainos-panel-border pt-4">
-                <SliderSetting
-                  label="Magnitude Filter"
-                  value={settings.magnitudeFilter}
-                  min={1}
-                  max={8}
-                  step={0.5}
-                  onChange={(v) => updateSettings({ magnitudeFilter: v })}
-                  formatValue={(v) => `≤ ${v.toFixed(1)}`}
+                <div className="text-[10px] uppercase tracking-wider text-ainos-accent font-semibold mb-2">
+                  Constellations
+                </div>
+                <ToggleSetting
+                  label="Constellation Lines"
+                  checked={settings.showConstellationLines}
+                  onChange={(v) => updateSettings({ showConstellationLines: v })}
+                />
+                <div className="mt-3">
+                  <ToggleSetting
+                    label="Constellation Labels"
+                    checked={settings.showConstellationLabels}
+                    onChange={(v) => updateSettings({ showConstellationLabels: v })}
+                  />
+                </div>
+              </div>
+
+              {/* Deep Sky Objects Section */}
+              <div className="border-t border-ainos-panel-border pt-4">
+                <div className="text-[10px] uppercase tracking-wider text-ainos-accent font-semibold mb-2">
+                  Deep Sky Objects
+                </div>
+                <ToggleSetting
+                  label="Show DSO"
+                  checked={settings.showDSO}
+                  onChange={(v) => updateSettings({ showDSO: v })}
+                />
+                <div className="mt-3">
+                  <ToggleSetting
+                    label="DSO Labels"
+                    checked={settings.showDSOLabels}
+                    onChange={(v) => updateSettings({ showDSOLabels: v })}
+                  />
+                </div>
+                <div className="mt-3">
+                  <ToggleSetting
+                    label="Nebulae"
+                    checked={settings.showNebulae}
+                    onChange={(v) => updateSettings({ showNebulae: v })}
+                  />
+                </div>
+                <div className="mt-3">
+                  <ToggleSetting
+                    label="Galaxies"
+                    checked={settings.showGalaxies}
+                    onChange={(v) => updateSettings({ showGalaxies: v })}
+                  />
+                </div>
+                <div className="mt-3">
+                  <ToggleSetting
+                    label="Star Clusters"
+                    checked={settings.showClusters}
+                    onChange={(v) => updateSettings({ showClusters: v })}
+                  />
+                </div>
+                <div className="mt-3">
+                  <SliderSetting
+                    label="DSO Magnitude Limit"
+                    value={settings.dsoMagnitudeFilter}
+                    min={6}
+                    max={15}
+                    step={0.5}
+                    onChange={(v) => updateSettings({ dsoMagnitudeFilter: v })}
+                    formatValue={(v) => `≤ ${v.toFixed(1)}`}
+                  />
+                </div>
+              </div>
+
+              {/* Grid & Markers Section */}
+              <div className="border-t border-ainos-panel-border pt-4">
+                <div className="text-[10px] uppercase tracking-wider text-ainos-accent font-semibold mb-2">
+                  Grids & Markers
+                </div>
+                <ToggleSetting
+                  label="Coordinate Grid"
+                  checked={settings.showCoordinateGrid}
+                  onChange={(v) => updateSettings({ showCoordinateGrid: v })}
                 />
               </div>
 
-              <SliderSetting
-                label="HUD Transparency"
-                value={settings.hudTransparency}
-                min={0.3}
-                max={1}
-                step={0.05}
-                onChange={(v) => updateSettings({ hudTransparency: v })}
-                formatValue={(v) => `${Math.round(v * 100)}%`}
-              />
+              {/* Display Section */}
+              <div className="border-t border-ainos-panel-border pt-4">
+                <div className="text-[10px] uppercase tracking-wider text-ainos-accent font-semibold mb-2">
+                  Display
+                </div>
+                <ToggleSetting
+                  label="Night Mode"
+                  checked={settings.nightMode}
+                  onChange={(v) => updateSettings({ nightMode: v })}
+                />
+                <div className="mt-3">
+                  <SliderSetting
+                    label="HUD Transparency"
+                    value={settings.hudTransparency}
+                    min={0.3}
+                    max={1}
+                    step={0.05}
+                    onChange={(v) => updateSettings({ hudTransparency: v })}
+                    formatValue={(v) => `${Math.round(v * 100)}%`}
+                  />
+                </div>
+              </div>
             </div>
           </motion.div>
         )}

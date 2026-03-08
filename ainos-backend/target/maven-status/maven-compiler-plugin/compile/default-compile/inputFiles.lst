@@ -3,6 +3,8 @@
 /Users/abdnurlan/Desktop/AINOS/ainos-backend/src/main/java/com/ainos/controller/AstronomyController.java
 /Users/abdnurlan/Desktop/AINOS/ainos-backend/src/main/java/com/ainos/controller/StarController.java
 /Users/abdnurlan/Desktop/AINOS/ainos-backend/src/main/java/com/ainos/model/ConstellationData.java
+/Users/abdnurlan/Desktop/AINOS/ainos-backend/src/main/java/com/ainos/model/ConstellationLineData.java
+/Users/abdnurlan/Desktop/AINOS/ainos-backend/src/main/java/com/ainos/model/DSOData.java
 /Users/abdnurlan/Desktop/AINOS/ainos-backend/src/main/java/com/ainos/model/PlanetPosition.java
 /Users/abdnurlan/Desktop/AINOS/ainos-backend/src/main/java/com/ainos/model/PointRequest.java
 /Users/abdnurlan/Desktop/AINOS/ainos-backend/src/main/java/com/ainos/model/PointResponse.java

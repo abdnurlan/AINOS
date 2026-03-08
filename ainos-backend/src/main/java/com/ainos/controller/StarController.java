@@ -1,6 +1,7 @@
 package com.ainos.controller;
 
 import com.ainos.model.ConstellationData;
+import com.ainos.model.DSOData;
 import com.ainos.model.StarData;
 import com.ainos.service.CatalogService;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -27,5 +28,15 @@ public class StarController {
     @GetMapping("/constellations")
     public List<ConstellationData> getConstellations() {
         return catalogService.getConstellations();
+    }
+
+    @GetMapping("/dso")
+    public List<DSOData> getDsoObjects() {
+        return catalogService.getDsoObjects();
+    }
+
+    @GetMapping("/messier")
+    public List<DSOData> getMessierObjects() {
+        return catalogService.getMessierObjects();
     }
 }

@@ -1,11 +1,8 @@
 import { useMemo } from 'react';
 import { Billboard, Text } from '@react-three/drei';
-import starsData from '../../data/stars.json';
 import { raDecToCartesian } from '../../utils/astronomy';
 import { useAppStore } from '../../store/useAppStore';
-import type { Star } from '../../types';
-
-const stars = starsData as Star[];
+import { useCatalogStore } from '../../store/useCatalogStore';
 
 /**
  * Renders floating text labels for bright named stars in the 3D scene.
@@ -13,6 +10,7 @@ const stars = starsData as Star[];
  */
 export default function StarLabels() {
   const showLabels = useAppStore((s) => s.settings.showStarLabels);
+  const stars = useCatalogStore((s) => s.stars);
 
   const labelData = useMemo(() => {
     return stars
@@ -25,7 +23,7 @@ export default function StarLabels() {
           mag: s.mag,
         };
       });
-  }, []);
+  }, [stars]);
 
   if (!showLabels) return null;
 

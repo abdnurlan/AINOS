@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { Line } from '@react-three/drei';
 import * as THREE from 'three';
 import { useAppStore } from '../../store/useAppStore';
 
@@ -42,7 +43,7 @@ export default function CoordinateGrid() {
         const z = -radius * Math.cos(decRad) * Math.sin(raRad);
         points.push(new THREE.Vector3(x, y, z));
       }
-      result.push(points);
+      result.push([...points, points[0].clone()]);
     }
 
     return result;
@@ -53,11 +54,15 @@ export default function CoordinateGrid() {
   return (
     <group>
       {lines.map((points, i) => {
-        const geometry = new THREE.BufferGeometry().setFromPoints(points);
         return (
-          <lineSegments key={i} geometry={geometry}>
-            <lineBasicMaterial color="#1e3a5f" transparent opacity={0.15} />
-          </lineSegments>
+          <Line
+            key={i}
+            points={points}
+            color="#1e3a5f"
+            lineWidth={0.6}
+            transparent
+            opacity={0.15}
+          />
         );
       })}
     </group>

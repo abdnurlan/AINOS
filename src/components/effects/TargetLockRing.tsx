@@ -1,7 +1,8 @@
-import { useRef } from 'react';
+import { useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { raDecToCartesian } from '../../utils/astronomy';
+import { resolveCelestialObject } from '../../utils/catalog';
 import { useAppStore } from '../../store/useAppStore';
 
 const ringVertexShader = `
@@ -44,8 +45,15 @@ const ringFragmentShader = `
 
 export default function TargetLockRing() {
   const selectedObject = useAppStore((s) => s.selectedObject);
+  const observer = useAppStore((s) => s.observer);
+  const simulationTime = useAppStore((s) => s.simulationTime);
   const meshRef = useRef<THREE.Mesh>(null);
   const materialRef = useRef<THREE.ShaderMaterial>(null);
+
+  const resolvedObject = useMemo(() => {
+    if (!selectedObject) return null;
+    return resolveCelestialObject(selectedObject, observer, simulationTime);
+  }, [observer, selectedObject, simulationTime]);
 
   useFrame(({ clock }) => {
     if (materialRef.current) {
@@ -56,9 +64,9 @@ export default function TargetLockRing() {
     }
   });
 
-  if (!selectedObject) return null;
+  if (!resolvedObject) return null;
 
-  const [x, y, z] = raDecToCartesian(selectedObject.ra, selectedObject.dec, 494);
+  const [x, y, z] = raDecToCartesian(resolvedObject.ra, resolvedObject.dec, 494);
 
   return (
     <mesh ref={meshRef} position={[x, y, z]}>

@@ -7,10 +7,25 @@ MAVEN_URL="https://dlcdn.apache.org/maven/maven-3/${MAVEN_VERSION}/binaries/apac
 MAVEN_DIR="$HOME/.m2/wrapper/dists/apache-maven-${MAVEN_VERSION}"
 MVN_CMD="$MAVEN_DIR/bin/mvn"
 
+if command -v mvn >/dev/null 2>&1; then
+    exec mvn "$@"
+fi
+
 if [ ! -f "$MVN_CMD" ]; then
     echo "Downloading Maven ${MAVEN_VERSION}..."
     mkdir -p "$MAVEN_DIR"
-    curl -sL "$MAVEN_URL" | tar -xz --strip-components=1 -C "$MAVEN_DIR"
+    ARCHIVE="$(mktemp)"
+    if ! curl -fsSL "$MAVEN_URL" -o "$ARCHIVE"; then
+        rm -f "$ARCHIVE"
+        echo "Failed to download Maven from $MAVEN_URL" >&2
+        exit 1
+    fi
+    if ! tar -xzf "$ARCHIVE" --strip-components=1 -C "$MAVEN_DIR"; then
+        rm -f "$ARCHIVE"
+        echo "Downloaded Maven archive could not be extracted." >&2
+        exit 1
+    fi
+    rm -f "$ARCHIVE"
 fi
 
 exec "$MVN_CMD" "$@"

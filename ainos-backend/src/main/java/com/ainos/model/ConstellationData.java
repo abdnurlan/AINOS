@@ -5,5 +5,5 @@ import java.util.List;
 public record ConstellationData(
     String name,
     String abbr,
-    List<int[]> lines
+    List<ConstellationLineData> lines
 ) {}

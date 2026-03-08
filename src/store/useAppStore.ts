@@ -1,5 +1,6 @@
 import { create } from 'zustand';
-import type { CelestialObject, ObserverLocation, AppSettings, DeviceStatus } from '../types';
+import type { CelestialObject, ObserverLocation, AppSettings, DeviceStatus, LaserTarget } from '../types';
+import { sanitizeCelestialObject } from '../utils/celestial';
 
 interface AppState {
   // Selected object
@@ -33,12 +34,48 @@ interface AppState {
   // Camera target
   cameraTarget: { ra: number; dec: number } | null;
   setCameraTarget: (target: { ra: number; dec: number } | null) => void;
+
+  // Laser targeting
+  laserTarget: LaserTarget | null;
+  setLaserTarget: (target: LaserTarget | null) => void;
+  setLaserOn: (laserOn: boolean) => void;
+  clearLaserTarget: () => void;
+
+  // Time simulation
+  simulationTime: Date;
+  setSimulationTime: (time: Date) => void;
+  timeSpeed: number;
+  setTimeSpeed: (speed: number) => void;
+  isPlaying: boolean;
+  togglePlaying: () => void;
+  setPlaying: (playing: boolean) => void;
+
+  // Visibility toggles
+  showGround: boolean;
+  setShowGround: (show: boolean) => void;
+  showAtmosphere: boolean;
+  setShowAtmosphere: (show: boolean) => void;
+  showCardinalPoints: boolean;
+  setShowCardinalPoints: (show: boolean) => void;
+
+  // FOV and Camera Tracking
+  currentFov: number;
+  setCurrentFov: (fov: number) => void;
+  cameraAlt: number;
+  cameraAz: number;
+  setCameraPosition: (alt: number, az: number) => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
   // Selected object
   selectedObject: null,
-  setSelectedObject: (obj) => set({ selectedObject: obj, infoPanelOpen: obj !== null }),
+  setSelectedObject: (obj) => {
+    const sanitized = sanitizeCelestialObject(obj);
+    if (obj && !sanitized) {
+      console.warn('Ignoring invalid celestial selection:', obj);
+    }
+    set({ selectedObject: sanitized, infoPanelOpen: sanitized !== null });
+  },
 
   // Default observer: Baku, Azerbaijan
   observer: {
@@ -54,7 +91,13 @@ export const useAppStore = create<AppState>((set) => ({
     showConstellationLabels: true,
     showStarLabels: true,
     showCoordinateGrid: false,
+    showDSO: true,
+    showDSOLabels: true,
+    showNebulae: true,
+    showGalaxies: true,
+    showClusters: true,
     magnitudeFilter: 6.5,
+    dsoMagnitudeFilter: 12.0,
     nightMode: false,
     hudTransparency: 0.85,
   },
@@ -88,4 +131,42 @@ export const useAppStore = create<AppState>((set) => ({
   // Camera target
   cameraTarget: null,
   setCameraTarget: (target) => set({ cameraTarget: target }),
+
+  // Laser targeting - don't auto-enable laser, just set target
+  laserTarget: null,
+  setLaserTarget: (target) =>
+    set({ laserTarget: target }),
+  setLaserOn: (laserOn) =>
+    set((state) => ({
+      deviceStatus: { ...state.deviceStatus, laserOn },
+    })),
+  clearLaserTarget: () =>
+    set((state) => ({
+      laserTarget: null,
+      deviceStatus: { ...state.deviceStatus, laserOn: false },
+    })),
+
+  // Time simulation
+  simulationTime: new Date(),
+  setSimulationTime: (time) => set({ simulationTime: time }),
+  timeSpeed: 1,
+  setTimeSpeed: (speed) => set({ timeSpeed: speed }),
+  isPlaying: true,
+  togglePlaying: () => set((state) => ({ isPlaying: !state.isPlaying })),
+  setPlaying: (playing) => set({ isPlaying: playing }),
+
+  // Visibility toggles
+  showGround: true,
+  setShowGround: (show) => set({ showGround: show }),
+  showAtmosphere: true,
+  setShowAtmosphere: (show) => set({ showAtmosphere: show }),
+  showCardinalPoints: true,
+  setShowCardinalPoints: (show) => set({ showCardinalPoints: show }),
+
+  // FOV and Camera Tracking
+  currentFov: 75,
+  setCurrentFov: (fov) => set({ currentFov: fov }),
+  cameraAlt: 0,
+  cameraAz: 0,
+  setCameraPosition: (alt, az) => set({ cameraAlt: alt, cameraAz: az }),
 }));

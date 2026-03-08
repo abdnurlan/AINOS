@@ -1,13 +1,17 @@
 com/ainos/service/AstronomyService.class
+com/ainos/service/CatalogService$4.class
 com/ainos/model/PlanetPosition.class
 com/ainos/model/ConstellationData.class
 com/ainos/AinosApplication.class
 com/ainos/controller/AstronomyController.class
+com/ainos/model/ConstellationLineData.class
 com/ainos/service/CatalogService.class
 com/ainos/controller/StarController.class
+com/ainos/model/DSOData.class
 com/ainos/model/StarData.class
 com/ainos/service/CatalogService$1.class
 com/ainos/service/CatalogService$2.class
 com/ainos/config/WebConfig.class
 com/ainos/model/PointRequest.class
 com/ainos/model/PointResponse.class
+com/ainos/service/CatalogService$3.class

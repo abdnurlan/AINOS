@@ -1,48 +1,37 @@
 import { useMemo } from 'react';
 import { Line } from '@react-three/drei';
-import starsData from '../../data/stars.json';
-import constellationsData from '../../data/constellations.json';
 import { raDecToCartesian } from '../../utils/astronomy';
 import { useAppStore } from '../../store/useAppStore';
-import type { Star } from '../../types';
-
-const stars = starsData as Star[];
-
-interface ConstellationEntry {
-  name: string;
-  abbr: string;
-  lines: number[][];
-}
-
-const constellations = constellationsData as ConstellationEntry[];
-
-// Build a lookup map: HIP ID → star
-const starMap = new Map<number, Star>();
-stars.forEach((s) => starMap.set(s.hip, s));
+import { useCatalogStore } from '../../store/useCatalogStore';
 
 export default function ConstellationLines() {
   const show = useAppStore((s) => s.settings.showConstellationLines);
+  const stars = useCatalogStore((s) => s.stars);
+  const constellations = useCatalogStore((s) => s.constellations);
 
   const lineSegments = useMemo(() => {
     if (!show) return [];
 
+    const starMap = new Map<number, (typeof stars)[number]>();
+    stars.forEach((star) => starMap.set(star.hip, star));
+
     const segments: { points: [number, number, number][] }[] = [];
 
     constellations.forEach((c) => {
-      c.lines.forEach(([fromHip, toHip]) => {
-        if (fromHip === toHip) return; // Skip self-references
-        const fromStar = starMap.get(fromHip);
-        const toStar = starMap.get(toHip);
+      c.lines.forEach(({ from, to }) => {
+        if (from === to) return;
+        const fromStar = starMap.get(from);
+        const toStar = starMap.get(to);
         if (!fromStar || !toStar) return;
 
-        const from = raDecToCartesian(fromStar.ra, fromStar.dec, 499);
-        const to = raDecToCartesian(toStar.ra, toStar.dec, 499);
-        segments.push({ points: [from, to] });
+        const fromPoint = raDecToCartesian(fromStar.ra, fromStar.dec, 499);
+        const toPoint = raDecToCartesian(toStar.ra, toStar.dec, 499);
+        segments.push({ points: [fromPoint, toPoint] });
       });
     });
 
     return segments;
-  }, [show]);
+  }, [constellations, show, stars]);
 
   if (!show) return null;
 

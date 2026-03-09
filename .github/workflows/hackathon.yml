@@ -1,4 +1,4 @@
-name: HACKATHON DEPLOY ELIYIREM GAGA
+name: ainos DEPLOY ELIYIREM GAGA
 
 on:
   push:
@@ -23,7 +23,6 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GHCR_TOKEN }}
 
-    # ── Build & push Frontend image ────────────────────────
     - name: Build and push Frontend image
       uses: docker/build-push-action@v5
       with:
@@ -34,7 +33,6 @@ jobs:
         cache-from: type=gha,scope=frontend
         cache-to: type=gha,mode=max,scope=frontend
 
-    # ── Build & push Backend image ─────────────────────────
     - name: Build and push Backend image
       uses: docker/build-push-action@v5
       with:
@@ -72,7 +70,7 @@ jobs:
         ssh -o StrictHostKeyChecking=no root@$SERVER_IP << EOF
             echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u "${{ secrets.GHCR_USERNAME }}" --password-stdin
             export GHCR_USERNAME="${{ secrets.GHCR_USERNAME }}"
-            docker compose pull
-            docker compose down
-            docker compose up -d --remove-orphans
+            docker-compose pull
+            docker-compose down
+            docker-compose up -d --remove-orphans
         EOF

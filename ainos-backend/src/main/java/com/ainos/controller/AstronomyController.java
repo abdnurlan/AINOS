@@ -3,7 +3,9 @@ package com.ainos.controller;
 import com.ainos.model.PlanetPosition;
 import com.ainos.model.PointRequest;
 import com.ainos.model.PointResponse;
+import com.ainos.model.SelectedObject;
 import com.ainos.service.AstronomyService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
@@ -32,6 +34,16 @@ public class AstronomyController {
             @RequestParam(defaultValue = "49.8671") double longitude,
             @RequestParam(defaultValue = "28") double elevation) {
         return astronomyService.calculatePlanetPositions(latitude, longitude, elevation);
+    }
+
+    @GetMapping("/selected-object")
+    public ResponseEntity<SelectedObject> getSelectedObject() {
+        return ResponseEntity.ok(new SelectedObject(
+                (boolean) laserState.getOrDefault("active", false),
+                (Double) laserState.getOrDefault("azimuth", null),
+                (Double) laserState.getOrDefault("altitude", null)
+            )
+        );
     }
 
     @PostMapping("/point")

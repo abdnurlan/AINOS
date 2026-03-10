@@ -7,7 +7,7 @@
  * - GET /api/laser/status - Get current status
  */
 
-const API_BASE = 'http://localhost:8080/api/laser';
+const API_BASE = 'http://46.101.251.48:8080/api/laser';
 
 export interface LaserCommand {
   ra: number;        // Right Ascension in degrees (0-360)

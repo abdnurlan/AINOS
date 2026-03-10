@@ -2,8 +2,9 @@ import { useMemo } from 'react';
 import * as THREE from 'three';
 
 /**
- * Renders a ground plane at the horizon with a procedural landscape silhouette.
- * Creates the Stellarium-like effect of standing on Earth looking up.
+ * Renders a realistic ground plane at the horizon with terrain coloring,
+ * tree/hill silhouettes, and opaque filling below horizon.
+ * Stellarium-style: solid ground that fully blocks below-horizon objects.
  */
 
 const groundVertexShader = `
@@ -54,30 +55,53 @@ const groundFragmentShader = `
     // Only render below horizon
     if (dir.y > 0.02) discard;
     
-    // Angle from horizon
+    // Angle from horizon and azimuth
     float angle = atan(dir.z, dir.x);
     float horizonDist = abs(dir.y);
     
     // Tree/hill silhouette at horizon edge
     float silhouetteNoise = fbm(vec2(angle * 8.0, 0.0)) * 0.03;
-    float silhouette = smoothstep(0.0, 0.025 + silhouetteNoise, -dir.y);
+    float treeDetail = fbm(vec2(angle * 40.0, 0.0)) * 0.008;
+    float silhouette = smoothstep(0.0, 0.02 + silhouetteNoise + treeDetail, -dir.y);
     
-    // Ground color - dark green/brown gradient
-    vec3 horizonColor = vec3(0.02, 0.04, 0.02); // Dark green at horizon
-    vec3 groundColor = vec3(0.01, 0.015, 0.01);  // Very dark green below
-    vec3 color = mix(horizonColor, groundColor, smoothstep(0.0, 0.3, horizonDist));
+    // === REALISTIC TERRAIN COLORS ===
+    // Night terrain palette
+    float terrainNoise1 = fbm(vec2(angle * 15.0, horizonDist * 20.0));
+    float terrainNoise2 = fbm(vec2(angle * 30.0, horizonDist * 40.0 + 50.0));
+    float terrainNoise3 = fbm(vec2(angle * 5.0, horizonDist * 10.0 + 100.0));
     
-    // Subtle terrain variation
-    float terrainNoise = fbm(vec2(angle * 20.0, horizonDist * 30.0)) * 0.02;
-    color += vec3(terrainNoise * 0.5, terrainNoise, terrainNoise * 0.3);
+    // Base terrain colors (green grass meadow)
+    vec3 darkGrass = vec3(0.08, 0.18, 0.04);       // Green grass
+    vec3 dryGrass = vec3(0.12, 0.16, 0.04);         // Yellow-green grass
+    vec3 soil = vec3(0.10, 0.08, 0.04);              // Brown soil patches
+    vec3 rock = vec3(0.10, 0.10, 0.09);              // Grey rock
+    vec3 deepGround = vec3(0.05, 0.10, 0.03);        // Darker green below
     
-    // Horizon glow (subtle atmospheric scattering at ground level)
-    float horizonGlow = exp(-horizonDist * 15.0) * 0.08;
-    color += vec3(0.05, 0.08, 0.12) * horizonGlow;
+    // Mix terrain types based on noise
+    vec3 groundColor = mix(darkGrass, dryGrass, smoothstep(0.3, 0.7, terrainNoise1));
+    groundColor = mix(groundColor, soil, smoothstep(0.4, 0.8, terrainNoise2) * 0.5);
+    groundColor = mix(groundColor, rock, smoothstep(0.6, 0.9, terrainNoise3) * 0.3);
     
+    // Depth gradient — further below horizon gets darker
+    groundColor = mix(groundColor, deepGround, smoothstep(0.0, 0.5, horizonDist));
+    
+    // Subtle terrain variation (patches of lighter/darker areas)
+    float patchNoise = fbm(vec2(angle * 20.0, horizonDist * 30.0));
+    groundColor += vec3(patchNoise * 0.01, patchNoise * 0.012, patchNoise * 0.005);
+    
+    // Horizon glow (warm atmospheric scattering at ground level)
+    float horizonGlow = exp(-horizonDist * 15.0) * 0.12;
+    vec3 horizonColor = vec3(0.06, 0.08, 0.12); // Slight blue-grey atmospheric glow
+    groundColor += horizonColor * horizonGlow;
+    
+    // Slight warm tint near horizon (city light pollution effect)
+    float cityGlow = exp(-horizonDist * 20.0) * 0.04;
+    groundColor += vec3(0.08, 0.05, 0.02) * cityGlow * (0.5 + 0.5 * sin(angle * 3.0));
+    
+    // FULLY OPAQUE — blocks all objects below horizon
     float alpha = silhouette;
     
-    gl_FragColor = vec4(color, alpha);
+    gl_FragColor = vec4(groundColor, alpha);
   }
 `;
 
@@ -88,7 +112,7 @@ export default function Ground() {
       vertexShader: groundVertexShader,
       fragmentShader: groundFragmentShader,
       transparent: true,
-      depthWrite: false,
+      depthWrite: true, // Write depth to block objects behind ground
       side: THREE.BackSide,
     });
     return { geometry: geo, material: mat };

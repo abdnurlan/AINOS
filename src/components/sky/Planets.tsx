@@ -37,7 +37,8 @@ export default function Planets() {
   const groupRef = useRef<THREE.Group>(null);
 
   const planets = useMemo(() => {
-    return calculatePlanetPositions(observer, simulationTime);
+    return calculatePlanetPositions(observer, simulationTime)
+      .filter((p) => p.altitude > -5); // Hide objects well below horizon
   }, [observer, simulationTime]);
 
   const handlePlanetClick = useCallback(

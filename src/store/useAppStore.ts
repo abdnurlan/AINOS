@@ -77,11 +77,11 @@ export const useAppStore = create<AppState>((set) => ({
     set({ selectedObject: sanitized, infoPanelOpen: sanitized !== null });
   },
 
-  // Default observer: Baku, Azerbaijan
+  // Default observer: Geneva, Switzerland
   observer: {
-    latitude: 40.4093,
-    longitude: 49.8671,
-    elevation: 28,
+    latitude: 46.2044,
+    longitude: 6.1432,
+    elevation: 375,
   },
   setObserver: (loc) => set({ observer: loc }),
 

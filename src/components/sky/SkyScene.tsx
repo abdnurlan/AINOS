@@ -9,7 +9,7 @@ import Planets from './Planets';
 import MilkyWay from './MilkyWay';
 import DSOField from './DSOField';
 // LaserBeam removed - laser is controlled by backend hardware
-import ClickableStars from './ClickableStars';
+import SkyClickHandler from './SkyClickHandler';
 import CoordinateGrid from './CoordinateGrid';
 import CameraController from './CameraController';
 import Atmosphere from './Atmosphere';
@@ -101,7 +101,7 @@ function CameraManager() {
     return () => canvas.removeEventListener('wheel', handleWheel);
   }, [camera, gl.domElement]);
 
-  // Alt/Az and FOV Tracking
+  // Alt/Az and FOV Tracking + Horizon Clamping
   useFrame(() => {
     if ('fov' in camera) {
       const perspCamera = camera as THREE.PerspectiveCamera;
@@ -114,12 +114,40 @@ function CameraManager() {
     // Altitude: angle from XZ plane (-90 to +90)
     const alt = Math.asin(lookDir.y) * (180 / Math.PI);
     
+    // === HORIZON CLAMP: Prevent looking below -2° ===
+    const MIN_ALT_DEG = -2;
+    if (alt < MIN_ALT_DEG) {
+      // Clamp the look direction to min altitude
+      const minAltRad = (MIN_ALT_DEG * Math.PI) / 180;
+      const horizontalLen = Math.sqrt(lookDir.x * lookDir.x + lookDir.z * lookDir.z);
+      if (horizontalLen > 0.001) {
+        lookDir.y = Math.sin(minAltRad) * Math.sqrt(lookDir.x * lookDir.x + lookDir.y * lookDir.y + lookDir.z * lookDir.z);
+        const newHoriz = Math.cos(minAltRad) * Math.sqrt(1 - lookDir.y * lookDir.y + lookDir.y * lookDir.y);
+        const scale = newHoriz / horizontalLen;
+        lookDir.x *= scale;
+        lookDir.z *= scale;
+        lookDir.normalize();
+        
+        // Build new quaternion from clamped direction
+        const up = new THREE.Vector3(0, 1, 0);
+        const mat = new THREE.Matrix4().lookAt(
+          new THREE.Vector3(0, 0, 0),
+          lookDir,
+          up
+        );
+        camera.quaternion.setFromRotationMatrix(mat);
+      }
+    }
+    
+    // Recalculate after clamp
+    const finalDir = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+    const finalAlt = Math.asin(finalDir.y) * (180 / Math.PI);
+    
     // Azimuth: angle from North (N=0, E=90, S=180, W=270)
-    // N is (0,0,-1)
-    let az = Math.atan2(lookDir.x, -lookDir.z) * (180 / Math.PI);
+    let az = Math.atan2(finalDir.x, -finalDir.z) * (180 / Math.PI);
     if (az < 0) az += 360;
     
-    setCameraPosition(Math.round(alt * 10) / 10, Math.round(az * 10) / 10);
+    setCameraPosition(Math.round(finalAlt * 10) / 10, Math.round(az * 10) / 10);
   });
   
   return null;
@@ -134,7 +162,7 @@ export default function SkyScene() {
     <div className="w-full h-full">
       <Canvas
         camera={{
-          fov: 75,
+          fov: 50,
           near: 0.1,
           far: 2000,
           position: [0, 0, 0.01],
@@ -162,11 +190,12 @@ export default function SkyScene() {
             <StarLabels />
             <ConstellationLabels />
             <CoordinateGrid />
-            {/* Clickable layers last so raycast hits them first */}
-            <ClickableStars />
             <Planets />
           </Suspense>
         </SkyRotation>
+
+        {/* Click handler for all celestial objects */}
+        <SkyClickHandler />
 
         {/* LaserBeam removed - laser is controlled by backend hardware */}
 
@@ -184,7 +213,7 @@ export default function SkyScene() {
         <CameraManager />
         <OrbitControls
           enablePan={false}
-          enableZoom={false} // Disabled dolly zoom in favor of FOV zoom
+          enableZoom={false}
           enableDamping={true}
           dampingFactor={0.06}
           rotateSpeed={-0.25}

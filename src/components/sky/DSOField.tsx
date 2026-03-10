@@ -87,13 +87,27 @@ const dsoVertexShader = `
   
   varying vec3 vColor;
   varying float vType;
+  varying float vWorldY;
   
   void main() {
     vColor = dsoColor;
     vType = dsoType;
     
+    // World position after sky rotation
+    vec4 worldPos = modelMatrix * vec4(position, 1.0);
+    vWorldY = worldPos.y;
+    
+    // Hide below horizon
+    if (worldPos.y < -5.0) {
+      gl_PointSize = 0.0;
+      gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
+      return;
+    }
+    
+    float horizonFade = smoothstep(-5.0, 0.0, worldPos.y);
+    
     vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-    gl_PointSize = size * 4.0;
+    gl_PointSize = size * 4.0 * horizonFade;
     gl_PointSize = max(gl_PointSize, 4.0);
     gl_PointSize = min(gl_PointSize, 64.0);
     
@@ -104,8 +118,12 @@ const dsoVertexShader = `
 const dsoFragmentShader = `
   varying vec3 vColor;
   varying float vType;
+  varying float vWorldY;
   
   void main() {
+    // Discard below-horizon DSOs
+    if (vWorldY < -5.0) discard;
+    
     vec2 center = gl_PointCoord - vec2(0.5);
     float dist = length(center);
     
@@ -246,21 +264,25 @@ export default function DSOField() {
     return { geometry: geo, material: mat };
   }, [filteredDSOs]);
 
-  // Only Messier objects are clickable (103 objects max - good for performance)
+  // ALL filtered DSOs that are above horizon are clickable
   const clickableDSOs = useMemo(() => {
-    return filteredDSOs.filter((dso) => dso.messier !== null);
-  }, [filteredDSOs]);
+    return filteredDSOs.filter((dso) => {
+      const hz = equatorialToHorizontal(dso.ra, dso.dec, observer, simulationTime);
+      return hz.altitude > -2;
+    });
+  }, [filteredDSOs, observer, simulationTime]);
 
-  // Pre-compute positions for labels (only render labels for visible Messier objects)
+  // Pre-compute positions for labels (render labels for all clickable DSOs, limited for performance)
   const labelData = useMemo(() => {
     if (!settings.showDSOLabels) return [];
-    return clickableDSOs.slice(0, 50).map((dso) => ({
+    return clickableDSOs.slice(0, 80).map((dso) => ({
       dso,
       position: raDecToCartesian(dso.ra, dso.dec, 497) as [number, number, number],
       color: DSO_COLORS[dso.type] || '#cccccc',
-      label: `M${dso.messier}`,
+      label: dso.messier ? `M${dso.messier}` : dso.displayName,
     }));
   }, [clickableDSOs, settings.showDSOLabels]);
+
 
   if (!geometry || !material || filteredDSOs.length === 0) {
     return null;
@@ -271,8 +293,8 @@ export default function DSOField() {
       <points ref={meshRef} geometry={geometry} raycast={() => {}}>
         <primitive object={material} ref={matRef} attach="material" />
       </points>
-      
-      {/* DSO Labels - limited to 50 for performance */}
+
+      {/* DSO Labels */}
       {labelData.map(({ dso, position, color, label }) => (
         <Billboard 
           key={dso.id} 

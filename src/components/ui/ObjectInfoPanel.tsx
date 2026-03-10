@@ -19,12 +19,7 @@ const CrosshairIcon = () => (
   </svg>
 );
 
-const TrackIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" />
-    <path d="M12 6v6l4 2" />
-  </svg>
-);
+
 
 function getTypeIcon(type: string) {
   switch (type) {
@@ -95,10 +90,7 @@ function ObjectInfoCard() {
     setInfoPanelOpen(false);
   }, [setInfoPanelOpen, setSelectedObject]);
 
-  const handleTrack = useCallback(() => {
-    if (!currentObject) return;
-    console.log('Track:', currentObject.name);
-  }, [currentObject]);
+
 
   const handlePointLaser = useCallback(async () => {
     if (!currentObject) {
@@ -222,23 +214,15 @@ function ObjectInfoCard() {
         )}
       </div>
 
-      <div className="px-5 py-4 border-t border-ainos-panel-border flex gap-2">
+      <div className="px-5 py-4 border-t border-ainos-panel-border">
         <button
           onClick={handlePointLaser}
-          className="btn-primary flex-1 disabled:cursor-not-allowed disabled:opacity-50"
+          className="btn-primary w-full disabled:cursor-not-allowed disabled:opacity-50"
           title={canPointLaser ? 'Point laser at this object' : 'Laser is unavailable for this target'}
           disabled={!canPointLaser}
         >
           <CrosshairIcon />
           {laserBusy ? 'Pointing...' : 'Point Laser'}
-        </button>
-        <button
-          onClick={handleTrack}
-          className="btn-secondary flex-1 flex items-center justify-center gap-1.5"
-          title="Track this object"
-        >
-          <TrackIcon />
-          Track
         </button>
       </div>
 

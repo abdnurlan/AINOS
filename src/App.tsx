@@ -13,10 +13,42 @@ export default function App() {
   const nightMode = useAppStore((s) => s.settings.nightMode);
   const hudTransparency = useAppStore((s) => s.settings.hudTransparency);
   const loadCatalogs = useCatalogStore((s) => s.loadCatalogs);
+  const setObserver = useAppStore((s) => s.setObserver);
 
   useEffect(() => {
     void loadCatalogs();
   }, [loadCatalogs]);
+
+  // Real GPS from browser
+  useEffect(() => {
+    if (!navigator.geolocation) {
+      console.warn('Geolocation not supported — using default location');
+      return;
+    }
+
+    const watchId = navigator.geolocation.watchPosition(
+      (position) => {
+        setObserver({
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+          elevation: position.coords.altitude ?? 28,
+        });
+        console.log(
+          `📍 GPS: ${position.coords.latitude.toFixed(4)}°, ${position.coords.longitude.toFixed(4)}°`
+        );
+      },
+      (error) => {
+        console.warn('GPS unavailable, using default Baku location:', error.message);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 30000,
+      }
+    );
+
+    return () => navigator.geolocation.clearWatch(watchId);
+  }, [setObserver]);
 
   return (
     <div className={`w-screen h-screen relative overflow-hidden ${nightMode ? 'night-mode-filter' : ''}`}>

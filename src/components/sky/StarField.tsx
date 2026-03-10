@@ -24,10 +24,23 @@ const starVertexShader = `
   varying float vBrightness;
   varying float vSize;
   varying float vMagnitude;
+  varying float vWorldY;
   
   void main() {
     vColor = starColor;
     vMagnitude = magnitude;
+    
+    // World position after model rotation (sky rotation group)
+    vec4 worldPos = modelMatrix * vec4(position, 1.0);
+    vWorldY = worldPos.y;
+    
+    // If below horizon, make invisible (zero size)
+    if (worldPos.y < -5.0) {
+      gl_PointSize = 0.0;
+      gl_Position = vec4(2.0, 2.0, 2.0, 1.0); // off-screen
+      vBrightness = 0.0;
+      return;
+    }
     
     // Atmospheric scintillation (twinkling) - more pronounced for bright stars
     float twinkleStrength = 0.08 + 0.12 * (1.0 - magnitude / 6.5);
@@ -36,6 +49,9 @@ const starVertexShader = `
                         + twinkleStrength * 0.3 * sin(time * 8.7 + twinkleOffset * 25.12);
     
     vBrightness = twinkle;
+    
+    // Only fade right at horizon edge, don't dim above-horizon stars
+    float horizonFade = smoothstep(-5.0, 0.0, worldPos.y);
     
     vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
     
@@ -46,7 +62,7 @@ const starVertexShader = `
     // Base size with FOV scaling
     float baseSize = size * 5.0 * fovFactor;
     
-    gl_PointSize = baseSize * twinkle;
+    gl_PointSize = baseSize * twinkle * horizonFade;
     gl_PointSize = max(gl_PointSize, 1.5);
     gl_PointSize = min(gl_PointSize, 64.0);
     
@@ -61,8 +77,12 @@ const starFragmentShader = `
   varying float vBrightness;
   varying float vSize;
   varying float vMagnitude;
+  varying float vWorldY;
   
   void main() {
+    // Discard below-horizon stars
+    if (vWorldY < -5.0) discard;
+    
     vec2 center = gl_PointCoord - vec2(0.5);
     float dist = length(center);
     

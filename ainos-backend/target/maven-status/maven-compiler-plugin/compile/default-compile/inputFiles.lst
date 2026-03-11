@@ -8,6 +8,7 @@
 /Users/abdnurlan/Desktop/AINOS/ainos-backend/src/main/java/com/ainos/model/PlanetPosition.java
 /Users/abdnurlan/Desktop/AINOS/ainos-backend/src/main/java/com/ainos/model/PointRequest.java
 /Users/abdnurlan/Desktop/AINOS/ainos-backend/src/main/java/com/ainos/model/PointResponse.java
+/Users/abdnurlan/Desktop/AINOS/ainos-backend/src/main/java/com/ainos/model/SelectedObject.java
 /Users/abdnurlan/Desktop/AINOS/ainos-backend/src/main/java/com/ainos/model/StarData.java
 /Users/abdnurlan/Desktop/AINOS/ainos-backend/src/main/java/com/ainos/service/AstronomyService.java
 /Users/abdnurlan/Desktop/AINOS/ainos-backend/src/main/java/com/ainos/service/CatalogService.java

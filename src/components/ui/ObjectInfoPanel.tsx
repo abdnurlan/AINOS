@@ -113,18 +113,26 @@ function ObjectInfoCard() {
     setLaserFeedback(null);
 
     try {
+      const observer = useAppStore.getState().observer;
       const result = await pointLaser({
         ra: currentObject.ra,
         dec: currentObject.dec,
+        altitude: currentObject.altitude,
+        azimuth: currentObject.azimuth,
+        observerLat: observer.latitude,
+        observerLon: observer.longitude,
         objectName: currentObject.name,
         objectType: currentObject.type,
       });
 
       setLaserTarget({ ra: currentObject.ra, dec: currentObject.dec });
       setLaserOn(result.active);
+      // Show frontend-calculated Alt/Az (matches panel) instead of backend's
+      const feedbackAlt = currentObject.altitude?.toFixed(2) ?? result.altitude?.toFixed(2);
+      const feedbackAz = currentObject.azimuth?.toFixed(2) ?? result.azimuth?.toFixed(2);
       setLaserFeedback(
-        result.altitude !== null && result.azimuth !== null
-          ? `Laser aligned: Alt ${result.altitude?.toFixed(2)}° · Az ${result.azimuth?.toFixed(2)}°`
+        feedbackAlt && feedbackAz
+          ? `Laser aligned: Alt ${feedbackAlt}° · Az ${feedbackAz}°`
           : 'Laser command sent.'
       );
     } catch (error) {

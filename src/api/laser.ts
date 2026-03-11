@@ -12,6 +12,10 @@ const API_BASE = 'http://46.101.251.48:8080/api/laser';
 export interface LaserCommand {
   ra: number;        // Right Ascension in degrees (0-360)
   dec: number;       // Declination in degrees (-90 to +90)
+  altitude?: number; // Pre-calculated altitude from frontend
+  azimuth?: number;  // Pre-calculated azimuth from frontend
+  observerLat?: number; // Observer latitude
+  observerLon?: number; // Observer longitude
   objectName?: string;  // Optional: name of target object
   objectType?: string;  // Optional: type (star, planet, dso, etc.)
 }

@@ -19,7 +19,7 @@ import java.util.Map;
 public class AstronomyController {
 
     private final AstronomyService astronomyService;
-    
+
     // Current laser state
     private Map<String, Object> laserState = new HashMap<>();
 
@@ -41,9 +41,7 @@ public class AstronomyController {
         return ResponseEntity.ok(new SelectedObject(
                 (boolean) laserState.getOrDefault("active", false),
                 (Double) laserState.getOrDefault("azimuth", null),
-                (Double) laserState.getOrDefault("altitude", null)
-            )
-        );
+                (Double) laserState.getOrDefault("altitude", null)));
     }
 
     @PostMapping("/point")
@@ -61,15 +59,15 @@ public class AstronomyController {
      * 
      * Request body:
      * {
-     *   "ra": 83.633,        // Right Ascension in degrees (0-360)
-     *   "dec": 22.014,       // Declination in degrees (-90 to +90)
-     *   "objectName": "M1",  // Optional: name of target object
-     *   "objectType": "dso"  // Optional: type (star, planet, dso, etc.)
+     * "ra": 83.633, // Right Ascension in degrees (0-360)
+     * "dec": 22.014, // Declination in degrees (-90 to +90)
+     * "objectName": "M1", // Optional: name of target object
+     * "objectType": "dso" // Optional: type (star, planet, dso, etc.)
      * }
      */
-    // Observer location (Baku default - should match frontend)
-    private static final double OBSERVER_LAT = 40.4093;
-    private static final double OBSERVER_LON = 49.8671;
+    // Default observer location — used only as fallback
+    private static final double DEFAULT_OBSERVER_LAT = 46.2044; // Geneva
+    private static final double DEFAULT_OBSERVER_LON = 6.1432;
 
     @PostMapping("/laser/point")
     public Map<String, Object> pointLaser(@RequestBody Map<String, Object> command) {
@@ -78,20 +76,39 @@ public class AstronomyController {
         String objectName = (String) command.getOrDefault("objectName", "Unknown");
         String objectType = (String) command.getOrDefault("objectType", "unknown");
 
+        // Use frontend-provided observer location if available
+        double observerLat = command.containsKey("observerLat")
+                ? ((Number) command.get("observerLat")).doubleValue()
+                : DEFAULT_OBSERVER_LAT;
+        double observerLon = command.containsKey("observerLon")
+                ? ((Number) command.get("observerLon")).doubleValue()
+                : DEFAULT_OBSERVER_LON;
+
         // ============================================================
-        // STEP 1: Convert RA/Dec (equatorial) → Alt/Az (horizontal)
-        // This tells us WHERE in the sky the object is right now
+        // STEP 1: Get Alt/Az — prefer frontend-calculated values
+        // Frontend has the exact observer position + simulation time
         // ============================================================
-        double[] altAz = equatorialToHorizontal(ra, dec, OBSERVER_LAT, OBSERVER_LON);
-        double altitude = altAz[0];  // degrees above horizon (0-90)
-        double azimuth = altAz[1];   // degrees from North (0-360, clockwise)
+        double altitude;
+        double azimuth;
+
+        if (command.containsKey("altitude") && command.containsKey("azimuth")
+                && command.get("altitude") != null && command.get("azimuth") != null) {
+            // Use frontend-calculated coordinates (most accurate)
+            altitude = ((Number) command.get("altitude")).doubleValue();
+            azimuth = ((Number) command.get("azimuth")).doubleValue();
+        } else {
+            // Fallback: calculate from RA/Dec using observer location
+            double[] altAz = equatorialToHorizontal(ra, dec, observerLat, observerLon);
+            altitude = altAz[0];
+            azimuth = altAz[1];
+        }
 
         // ============================================================
         // STEP 2: Convert Alt/Az → Servo motor angles
         // Azimuth → horizontal servo (pan)
         // Altitude → vertical servo (tilt)
         // ============================================================
-        double servoAzimuth = azimuthToServoAngle(azimuth);   // 0-180 for servo
+        double servoAzimuth = azimuthToServoAngle(azimuth); // 0-180 for servo
         double servoAltitude = altitudeToServoAngle(altitude); // 0-180 for servo
 
         // ============================================================
@@ -144,42 +161,42 @@ public class AstronomyController {
     private double[] equatorialToHorizontal(double raDeg, double decDeg, double latDeg, double lonDeg) {
         // Current time
         double jd = getJulianDate();
-        
+
         // Greenwich Mean Sidereal Time (hours)
         double T = (jd - 2451545.0) / 36525.0;
         double gmst = 280.46061837 + 360.98564736629 * (jd - 2451545.0)
-                     + 0.000387933 * T * T - T * T * T / 38710000.0;
+                + 0.000387933 * T * T - T * T * T / 38710000.0;
         gmst = ((gmst % 360) + 360) % 360; // normalize to 0-360
-        
+
         // Local Sidereal Time (degrees)
         double lst = gmst + lonDeg;
         lst = ((lst % 360) + 360) % 360;
-        
+
         // Hour Angle (degrees)
         double ha = lst - raDeg;
         ha = ((ha % 360) + 360) % 360;
-        
+
         // Convert to radians
         double haRad = Math.toRadians(ha);
         double decRad = Math.toRadians(decDeg);
         double latRad = Math.toRadians(latDeg);
-        
+
         // Calculate altitude
         double sinAlt = Math.sin(decRad) * Math.sin(latRad)
-                       + Math.cos(decRad) * Math.cos(latRad) * Math.cos(haRad);
+                + Math.cos(decRad) * Math.cos(latRad) * Math.cos(haRad);
         double altitude = Math.toDegrees(Math.asin(sinAlt));
-        
+
         // Calculate azimuth
         double cosAz = (Math.sin(decRad) - Math.sin(Math.toRadians(altitude)) * Math.sin(latRad))
-                      / (Math.cos(Math.toRadians(altitude)) * Math.cos(latRad));
+                / (Math.cos(Math.toRadians(altitude)) * Math.cos(latRad));
         cosAz = Math.max(-1, Math.min(1, cosAz)); // clamp
         double azimuth = Math.toDegrees(Math.acos(cosAz));
-        
+
         if (Math.sin(haRad) > 0) {
             azimuth = 360 - azimuth;
         }
-        
-        return new double[]{altitude, azimuth};
+
+        return new double[] { altitude, azimuth };
     }
 
     /**
@@ -211,7 +228,8 @@ public class AstronomyController {
      * TODO: Calibrate based on your actual servo mount.
      */
     private double altitudeToServoAngle(double altitude) {
-        if (altitude < 0) return 90; // below horizon, point at horizon
+        if (altitude < 0)
+            return 90; // below horizon, point at horizon
         // Map: 0° alt → 90° servo (horizontal), 90° alt → 0° servo (straight up)
         double servo = 90 - altitude;
         return Math.max(0, Math.min(180, servo));
@@ -231,10 +249,10 @@ public class AstronomyController {
     private void sendToHardware(double servoAz, double servoAlt, boolean laserOn) {
         // Format command string for hardware
         String hardwareCommand = String.format("AZ:%.1f,ALT:%.1f,LASER:%s",
-            servoAz, servoAlt, laserOn ? "ON" : "OFF");
-        
+                servoAz, servoAlt, laserOn ? "ON" : "OFF");
+
         System.out.println(">>> HARDWARE CMD: " + hardwareCommand);
-        
+
         // ========================================
         // TODO: Replace this with real hardware I/O
         // ========================================
@@ -258,7 +276,7 @@ public class AstronomyController {
     @PostMapping("/laser/off")
     public Map<String, Object> turnOffLaser() {
         System.out.println("=== LASER OFF COMMAND ===");
-        
+
         laserState.put("active", false);
         laserState.put("targetRa", null);
         laserState.put("targetDec", null);

@@ -63,7 +63,7 @@ function SkyRotation({ children }: { children: React.ReactNode }) {
     }
   });
 
-  return <group ref={groupRef}>{children}</group>;
+  return <group ref={groupRef} name="sky-rotation">{children}</group>;
 }
 
 /**

@@ -1,34 +1,23 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { useThree } from '@react-three/fiber';
 import * as THREE from 'three';
-import { equatorialToHorizontal } from '../../utils/astronomy';
+import { raDecToCartesian, equatorialToHorizontal } from '../../utils/astronomy';
 import { useAppStore } from '../../store/useAppStore';
 import { useCatalogStore } from '../../store/useCatalogStore';
 
 /**
- * SkyClickHandler — listens for clicks on the Three.js canvas and finds
- * the nearest celestial object (star, DSO) to the click point
- * using screen-space projection. Same approach used by Stellarium.
+ * SkyClickHandler — finds the nearest celestial object to click point
+ * by using the SAME transform as the visual rendering (SkyRotation group matrix).
+ * This ensures click targets match visual positions exactly.
  */
 export default function SkyClickHandler() {
-  const { camera, gl, size } = useThree();
-  const observerRef = useRef(useAppStore.getState().observer);
-  const simTimeRef = useRef(useAppStore.getState().simulationTime);
+  const { camera, gl, size, scene } = useThree();
   const clickStartRef = useRef<{ x: number; y: number } | null>(null);
-
-  // Keep refs in sync without causing re-renders
-  useEffect(() => {
-    const unsub = useAppStore.subscribe((state) => {
-      observerRef.current = state.observer;
-      simTimeRef.current = state.simulationTime;
-    });
-    return unsub;
-  }, []);
 
   const findNearestObject = useCallback(
     (clientX: number, clientY: number) => {
-      const observer = observerRef.current;
-      const simulationTime = simTimeRef.current;
+      const observer = useAppStore.getState().observer;
+      const simulationTime = useAppStore.getState().simulationTime;
       const stars = useCatalogStore.getState().stars;
       const dsoObjects = useCatalogStore.getState().dsoObjects;
       const magnitudeFilter = useAppStore.getState().settings.magnitudeFilter;
@@ -41,23 +30,22 @@ export default function SkyClickHandler() {
       const clickScreenX = ((ndcX + 1) / 2) * size.width;
       const clickScreenY = ((1 - ndcY) / 2) * size.height;
 
+      // Get the SkyRotation group's ACTUAL world matrix (same transform as visual rendering)
+      const skyGroup = scene.getObjectByName('sky-rotation');
+      const worldMatrix = skyGroup ? skyGroup.matrixWorld : new THREE.Matrix4();
+
       const tempVec = new THREE.Vector3();
-      
-      const projectToScreen = (ra: number, dec: number): { x: number; y: number } | null => {
-        const hz = equatorialToHorizontal(ra, dec, observer, simulationTime);
-        if (hz.altitude < -2) return null;
 
-        const altRad = (hz.altitude * Math.PI) / 180;
-        const azRad = (hz.azimuth * Math.PI) / 180;
-        
-        const y = Math.sin(altRad) * 500;
-        const xzLen = Math.cos(altRad) * 500;
-        const x = Math.sin(azRad) * xzLen;
-        const z = -Math.cos(azRad) * xzLen;
+      // Project using the sky group's world matrix — matches visual positions exactly
+      const projectToScreen = (ra: number, dec: number, radius: number): { x: number; y: number } | null => {
+        const [px, py, pz] = raDecToCartesian(ra, dec, radius);
+        tempVec.set(px, py, pz);
 
-        tempVec.set(x, y, z);
+        // Apply the sky rotation group's world transform (same as rendering)
+        tempVec.applyMatrix4(worldMatrix);
+
+        // Project to screen
         tempVec.project(camera);
-
         if (tempVec.z > 1) return null;
 
         return {
@@ -84,7 +72,7 @@ export default function SkyClickHandler() {
         const star = stars[i];
         if (star.mag > magnitudeFilter) continue;
 
-        const screen = projectToScreen(star.ra, star.dec);
+        const screen = projectToScreen(star.ra, star.dec, 500);
         if (!screen) continue;
 
         const dx = screen.x - clickScreenX;
@@ -111,7 +99,7 @@ export default function SkyClickHandler() {
       for (let i = 0; i < dsoObjects.length; i++) {
         const dso = dsoObjects[i];
 
-        const screen = projectToScreen(dso.ra, dso.dec);
+        const screen = projectToScreen(dso.ra, dso.dec, 498);
         if (!screen) continue;
 
         const dx = screen.x - clickScreenX;
@@ -134,6 +122,7 @@ export default function SkyClickHandler() {
         }
       }
 
+      // Select the nearest object
       if (bestResult) {
         const hz = equatorialToHorizontal(bestResult.ra, bestResult.dec, observer, simulationTime);
         setSelectedObject({
@@ -150,10 +139,10 @@ export default function SkyClickHandler() {
         });
       }
     },
-    [camera, gl, size]
+    [camera, gl, size, scene]
   );
 
-  // Event listeners
+  // Event listeners — distinguish clicks from drags
   useEffect(() => {
     const canvas = gl.domElement;
 
